@@ -3,6 +3,7 @@ import {
   createMailbox,
   createRandomMailbox,
   getActiveDomain,
+  getMailboxByAddress,
   getMailboxById,
   listDomains,
   listEmails,
@@ -50,6 +51,15 @@ publicRouter.post('/mailboxes/custom', asyncRoute(async (req, res) => {
     return res.status(201).json({ mailbox: await createMailbox(parsed.data) });
   } catch (error) {
     if (error.code === 11000) {
+      const existingMailbox = await getMailboxByAddress(`${parsed.data.localPart}@${parsed.data.domain}`);
+      if (existingMailbox) {
+        const mailbox = existingMailbox.active
+          ? existingMailbox
+          : await setMailboxActive(existingMailbox.id, true);
+
+        return res.json({ mailbox });
+      }
+
       return res.status(409).json({ error: 'MAILBOX_ALREADY_EXISTS' });
     }
 
