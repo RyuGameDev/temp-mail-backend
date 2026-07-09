@@ -117,6 +117,20 @@ export async function getMailboxByAddress(address) {
   return normalizeMailbox(mailbox);
 }
 
+export async function deleteMailbox(id) {
+  if (!isValidObjectId(id)) {
+    return null;
+  }
+
+  const mailbox = await Mailbox.findByIdAndDelete(id).lean();
+  if (!mailbox) {
+    return null;
+  }
+
+  await Email.deleteMany({ mailboxId: id });
+  return normalizeMailbox(mailbox);
+}
+
 export async function setMailboxActive(id, active) {
   if (!isValidObjectId(id)) {
     return null;
@@ -176,6 +190,38 @@ export async function getEmail(id) {
   }
 
   const email = await Email.findById(id).lean();
+  return normalizeEmail(email);
+}
+
+export async function getMailboxEmail(mailboxId, emailId) {
+  if (!isValidObjectId(mailboxId) || !isValidObjectId(emailId)) {
+    return null;
+  }
+
+  const email = await Email.findOne({ _id: emailId, mailboxId }).lean();
+  return normalizeEmail(email);
+}
+
+export async function markEmailRead(mailboxId, emailId, read = true) {
+  if (!isValidObjectId(mailboxId) || !isValidObjectId(emailId)) {
+    return null;
+  }
+
+  const email = await Email.findOneAndUpdate(
+    { _id: emailId, mailboxId },
+    { $set: { readAt: read ? new Date() : null } },
+    { new: true }
+  ).lean();
+
+  return normalizeEmail(email);
+}
+
+export async function deleteEmail(mailboxId, emailId) {
+  if (!isValidObjectId(mailboxId) || !isValidObjectId(emailId)) {
+    return null;
+  }
+
+  const email = await Email.findOneAndDelete({ _id: emailId, mailboxId }).lean();
   return normalizeEmail(email);
 }
 

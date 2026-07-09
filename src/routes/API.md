@@ -4,13 +4,38 @@ Base URL: `http://localhost:4000`
 
 ## Public
 
+Untuk penggunaan API eksternal, sertakan header `x-api-key`. Dapatkan akses dari owner di `https://t.me/yonkounoryu`.
+
 - `GET /api/health`
 - `GET /api/domains`
 - `POST /api/mailboxes/random`
 - `POST /api/mailboxes/custom`
+- `GET /api/mailboxes/by-address/:address`
 - `GET /api/mailboxes/:id`
 - `PATCH /api/mailboxes/:id/active`
+- `DELETE /api/mailboxes/:id`
 - `GET /api/mailboxes/:id/emails`
+- `GET /api/mailboxes/:id/emails/:emailId`
+- `PATCH /api/mailboxes/:id/emails/:emailId/read`
+- `DELETE /api/mailboxes/:id/emails/:emailId`
+
+### Contoh Body
+
+```json
+{ "domain": "example.com" }
+```
+
+```json
+{ "localPart": "demo", "domain": "example.com" }
+```
+
+```json
+{ "active": true }
+```
+
+```json
+{ "read": true }
+```
 
 ## Admin
 

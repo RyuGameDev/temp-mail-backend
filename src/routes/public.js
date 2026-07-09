@@ -2,11 +2,15 @@ import { Router } from 'express';
 import {
   createMailbox,
   createRandomMailbox,
+  deleteEmail,
+  deleteMailbox,
   getActiveDomain,
+  getMailboxEmail,
   getMailboxByAddress,
   getMailboxById,
   listDomains,
   listEmails,
+  markEmailRead,
   setMailboxActive,
   touchMailbox
 } from '../db/queries.js';
@@ -67,6 +71,16 @@ publicRouter.post('/mailboxes/custom', asyncRoute(async (req, res) => {
   }
 }));
 
+publicRouter.get('/mailboxes/by-address/:address', asyncRoute(async (req, res) => {
+  const mailbox = await getMailboxByAddress(req.params.address);
+  if (!mailbox) {
+    return res.status(404).json({ error: 'MAILBOX_NOT_FOUND' });
+  }
+
+  await touchMailbox(mailbox.id);
+  return res.json({ mailbox });
+}));
+
 publicRouter.get('/mailboxes/:id', asyncRoute(async (req, res) => {
   const mailbox = await getMailboxById(req.params.id);
   if (!mailbox) {
@@ -87,6 +101,15 @@ publicRouter.patch('/mailboxes/:id/active', asyncRoute(async (req, res) => {
   return res.json({ mailbox });
 }));
 
+publicRouter.delete('/mailboxes/:id', asyncRoute(async (req, res) => {
+  const mailbox = await deleteMailbox(req.params.id);
+  if (!mailbox) {
+    return res.status(404).json({ error: 'MAILBOX_NOT_FOUND' });
+  }
+
+  return res.json({ ok: true, mailbox });
+}));
+
 publicRouter.get('/mailboxes/:id/emails', asyncRoute(async (req, res) => {
   const mailbox = await getMailboxById(req.params.id);
   if (!mailbox) {
@@ -95,4 +118,34 @@ publicRouter.get('/mailboxes/:id/emails', asyncRoute(async (req, res) => {
 
   await touchMailbox(mailbox.id);
   return res.json({ emails: await listEmails(req.params.id) });
+}));
+
+publicRouter.get('/mailboxes/:id/emails/:emailId', asyncRoute(async (req, res) => {
+  const email = await getMailboxEmail(req.params.id, req.params.emailId);
+  if (!email) {
+    return res.status(404).json({ error: 'EMAIL_NOT_FOUND' });
+  }
+
+  await touchMailbox(req.params.id);
+  return res.json({ email });
+}));
+
+publicRouter.patch('/mailboxes/:id/emails/:emailId/read', asyncRoute(async (req, res) => {
+  const email = await markEmailRead(req.params.id, req.params.emailId, req.body.read !== false);
+  if (!email) {
+    return res.status(404).json({ error: 'EMAIL_NOT_FOUND' });
+  }
+
+  await touchMailbox(req.params.id);
+  return res.json({ email });
+}));
+
+publicRouter.delete('/mailboxes/:id/emails/:emailId', asyncRoute(async (req, res) => {
+  const email = await deleteEmail(req.params.id, req.params.emailId);
+  if (!email) {
+    return res.status(404).json({ error: 'EMAIL_NOT_FOUND' });
+  }
+
+  await touchMailbox(req.params.id);
+  return res.json({ ok: true, email });
 }));
